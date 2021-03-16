@@ -7,4 +7,6 @@
 - `$ cd .resources`
 - `$ npm run watch`
 
+![image](https://git.inven.co.kr/INVEN/resource-builder/wikis/uploads/073403c3a47166b6045075d3120e1688/image.png)
+
 ![image](https://git.inven.co.kr/INVEN/resource-builder/wikis/uploads/f857c8052976fabe3bd2c21ef9135f22/image.png)

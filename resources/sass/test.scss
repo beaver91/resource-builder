@@ -1,0 +1,8 @@
+body {
+    &.test {
+        font-size: 14px;
+        .test-box {
+            background-color: red;
+        }
+    }
+}

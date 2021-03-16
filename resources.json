@@ -1,0 +1,28 @@
+{
+  "common": {
+    "~base-layout.css": [
+      "./resources/sass/test.scss",
+      "./resources/sass/test2.scss"
+    ]
+  },
+  "lol": {
+    "~app.css": [
+      "./resources/sass/test.scss",
+      "./resources/sass/test2.scss"
+    ],
+    "~dataninfo.css": [
+      "./resources/sass/test.scss",
+      "./resources/sass/test2.scss"
+    ]
+  },
+  "maple": {
+    "~app.css": [
+      "./resources/sass/test.scss",
+      "./resources/sass/test2.scss"
+    ],
+    "~dataninfo.css": [
+      "./resources/sass/test.scss",
+      "./resources/sass/test2.scss"
+    ]
+  }
+}

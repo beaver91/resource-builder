@@ -4,6 +4,7 @@ import os from 'os';
 import md5 from 'md5';
 import { fileURLToPath } from 'url';
 import consoleTable from 'console-table-printer';
+import colors from 'colors';
 import { ResourceWatcher } from './ResourceWatcher.js';
 
 export class ResourceParser {
@@ -128,7 +129,7 @@ export class ResourceParser {
       table.push({
         "id": id.substr(0, 5),
         "files": watcher.files[0],
-        "output": watcher.output,
+        "output": colors.brightBlue(watcher.output),
       });
 
       if (watcher.files.length > 1) {

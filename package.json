@@ -4,7 +4,7 @@
   "description": "인벤 KR 사이트에 SCSS를 적용시키기 위한 베이스 도구",
   "main": "index.js",
   "scripts": {
-    "watch": "node index.js"
+    "watch-sass": "node watch.sass.js"
   },
   "author": "byzz",
   "license": "ISC",
@@ -18,5 +18,9 @@
     "parcel-bundler": "^1.12.4",
     "postcss-modules": "^4.0.0",
     "sass": "^1.32.8"
-  }
+  },
+  "devDependencies": {
+    "node-sass": "^5.0.0"
+  },
+  "homepage": "https://git.inven.co.kr/INVEN/resource-builder"
 }

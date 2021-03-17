@@ -4,14 +4,16 @@ import os from 'os';
 import md5 from 'md5';
 import { fileURLToPath } from 'url';
 import consoleTable from 'console-table-printer';
-import { ResourceWatcher } from './ResourceWatcher.js';
+import colors from 'colors';
+import nodesass from 'node-sass';
+import { SassDeployer } from './SassDeployer.js';
 
-export class ResourceParser {
-  #watchers;
+export class ResourceBuilder {
+  #deployers;
   resources;
 
   constructor(filepath) {
-    this.#watchers = {};
+    this.#deployers = {};
     this.resources = JSON.parse(fs.readFileSync(filepath));
   }
 
@@ -54,7 +56,7 @@ export class ResourceParser {
   /**
    * @param {Array} sites 
    */
-  watch(sites) {
+  setSites(sites) {
     if (!(sites instanceof Array)) {
       throw new TypeError(`배열이 입력되어야 합니다. (${sites})`);
     }
@@ -65,10 +67,10 @@ export class ResourceParser {
 
       for (let outdir in resources) {
         let output = this.resolvePath(site, outdir);
-        let watcherKey = md5(output);
+        let uid = md5(output);
         let files = resources[outdir];
 
-        this.#watchers[watcherKey] = new ResourceWatcher(output, files);
+        this.#deployers[uid] = new SassDeployer(uid, output, files);
       }
     }
   }
@@ -122,13 +124,13 @@ export class ResourceParser {
     const { printTable } = consoleTable;
     let table = [];
 
-    for (let id in this.#watchers) {
-      let watcher = this.#watchers[id];
+    for (let id in this.#deployers) {
+      let watcher = this.#deployers[id];
 
       table.push({
         "id": id.substr(0, 5),
         "files": watcher.files[0],
-        "output": watcher.output,
+        "output": colors.brightBlue(watcher.output),
       });
 
       if (watcher.files.length > 1) {
@@ -145,7 +147,10 @@ export class ResourceParser {
     printTable(table);
   }
 
-  deploy() {
-
+  watch() {
+    for (let idx in this.#deployers) {
+      let watcher = this.#deployers[idx];
+      console.log(watcher);
+    }
   }
 }

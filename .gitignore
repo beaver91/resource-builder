@@ -5,6 +5,8 @@
 .settings/
 .vscode/
 .gitlab/
+.parcel-cache/
+*.map
 iadmin/
 iboard/
 tsconfig.json

@@ -1,17 +1,17 @@
 {
   "name": "inven-resources",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "인벤 KR 사이트에 SCSS를 적용시키기 위한 베이스 도구",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "node index.js"
+    "watch-sass": "node watch.sass.js"
   },
-  "author": "",
+  "author": "byzz",
   "license": "ISC",
   "type": "module",
   "dependencies": {
     "autoprefixer": "^9.8.6",
+    "colors": "^1.4.0",
     "console-table-printer": "^2.8.1",
     "inquirer-autocomplete-prompt": "^1.3.0",
     "md5": "^2.3.0",
@@ -20,9 +20,7 @@
     "sass": "^1.32.8"
   },
   "devDependencies": {
-    "@parcel/transformer-sass": "^2.0.0-nightly.628",
-    "parcel": "^2.0.0-nightly.626",
-    "postcss": "^8.2.8",
-    "postcss-cli": "^8.3.1"
-  }
+    "node-sass": "^5.0.0"
+  },
+  "homepage": "https://git.inven.co.kr/INVEN/resource-builder"
 }

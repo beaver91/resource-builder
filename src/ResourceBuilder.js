@@ -112,7 +112,7 @@ export class ResourceBuilder {
       // TODO 커스텀 Path에 파일을 직접 지정할 수 있도록 기능 구현
     }
 
-    return path.normalize(resolve.join(os.platform() == 'win32' ? "\\" : '/'));
+    return path.normalize(resolve.join(os.platform() == 'win32' ? '\\' : '/'));
   }
 
   filetype(outdir) {

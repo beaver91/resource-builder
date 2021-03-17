@@ -147,6 +147,9 @@ export class ResourceParser {
   }
 
   deploy() {
-
+    for (let idx in this.#watchers) {
+      let watcher = this.#watchers[idx];
+      console.log(watcher);
+    }
   }
 }

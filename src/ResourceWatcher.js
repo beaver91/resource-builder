@@ -10,4 +10,6 @@ export class ResourceWatcher {
     this.output = output;
     this.files = files;
   }
+
+  
 }

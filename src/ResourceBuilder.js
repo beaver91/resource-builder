@@ -5,8 +5,8 @@ import md5 from 'md5';
 import { fileURLToPath } from 'url';
 import consoleTable from 'console-table-printer';
 import colors from 'colors';
-import nodesass from 'node-sass';
 import { SassDeployer } from './SassDeployer.js';
+import { spawn } from 'child_process';
 
 export class ResourceBuilder {
   #deployers;
@@ -128,15 +128,15 @@ export class ResourceBuilder {
       let watcher = this.#deployers[id];
 
       table.push({
-        "id": id.substr(0, 5),
+        "deploy id": id.substr(0, 7),
         "files": watcher.files[0],
         "output": colors.brightBlue(watcher.output),
       });
 
       if (watcher.files.length > 1) {
-        for (let idx in watcher.files) {
+        for (let idx = 1; idx < watcher.files.length; idx++) {
           table.push({ 
-            "id": "", 
+            "deploy id": "", 
             "files": watcher.files[idx],
             "output": "", 
           });
@@ -149,8 +149,31 @@ export class ResourceBuilder {
 
   watch() {
     for (let idx in this.#deployers) {
-      let watcher = this.#deployers[idx];
-      console.log(watcher);
+      let deployer = this.#deployers[idx];
+
+      deployer.enableSourceMap();
+      let commands = deployer.buildCommand();
+
+      console.log(`${colors.yellow('$')} ${colors.brightBlue(commands.join(' '))}`);
+
+      // https://stackoverflow.com/questions/46603489/how-to-force-utf-8-in-node-js-with-exec-process
+      let child = spawn(`@chcp 65001 >nul & ${commands[0]}`, commands.slice(1), { shell: true });
+
+      child.stdout.on('data', (data) => {
+        console.log(`stdout: ${data.toString()}`);
+      });
+      
+      child.stderr.on('data', (data) => {
+        console.error(`stderr: ${data}`);
+      });
+      
+      child.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+      });
     }
+  }
+
+  build() {
+
   }
 }

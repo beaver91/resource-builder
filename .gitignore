@@ -11,6 +11,7 @@ iadmin/
 iboard/
 tsconfig.json
 jsconfig.json
+./dist/
 
 ### PhpStorm+all ###
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm

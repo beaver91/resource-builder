@@ -1,5 +1,11 @@
+import { cat } from './intercept.js';
+import md5 from 'md5';
 
-export const SASS_OUTPUT_STYLES = ['nested', 'expanded', 'compact', 'compressed'];
+export const NESTED = 'nested';
+export const EXPANDED = 'expanded';
+export const COMPACT = 'compact';
+export const COMPRESSED = 'compressed';
+export const SASS_OUTPUT_STYLES = [NESTED, EXPANDED, COMPACT, COMPRESSED];
 export const NODE_SASS = 'node-sass';
 export const DEFAULT_ENGINE = NODE_SASS;
 
@@ -23,7 +29,7 @@ export class SassDeployer {
     this.#engine = NODE_SASS;
     this.#options = {
       "--output-style": SASS_OUTPUT_STYLES[0], // default is 'nested'
-      "--indent-type": 'space',
+      // "--indent-type": 'space',
     };
   }
 
@@ -40,6 +46,16 @@ export class SassDeployer {
     }
   }
 
+  enableSourceComments() {
+    this.#options['--source-comments'] = true;
+  }
+
+  disableSourceComments() {
+    if ('--source-comments' in this.#options) {
+      delete this.#options['--source-comments'];
+    }
+  }
+
   setOutputStyle(type) {
     type = String(type).toLowerCase();
 
@@ -51,27 +67,39 @@ export class SassDeployer {
   }
 
   /**
+   * @param {string} type
    * @return {string}
    */
-  buildCommand() {
+  command(type) {
     switch (this.#engine) {
       case NODE_SASS:
-        return this._nodeSass();
+        return this._nodeSass(type);
       break;
       default:
-        return this._nodeSass();
+        return this._nodeSass(type);
     }
   }
 
   /**
    * @examples `node-sass --watch .\resources\sass\test.scss .\resources\sass\test2.scss --output .\dist\`
+   * @param {string} type 
    * @return {Array}
    */
-  _nodeSass() {
+  _nodeSass(type) {
     // let commands = ['./node_modules/node-sass/bin/node-sass'];
     let commands = ['node-sass', ...this._options()];
+    let opt1 = (type == 'watch') ? '--watch' : null;
+    let inputs = this.files;
 
-    commands = [...commands, '--watch', ...this.files];
+    // build 모드일 경우 1개의 파일로 내용 통합
+    if (type == 'build') {
+      inputs = `./.inven/${md5(this.output)}.inven`;
+
+      cat(this.files, inputs);
+      inputs = [inputs];
+    }
+
+    commands = [...commands, opt1, ...inputs].filter(r => r != null);
     commands = [...commands, '--output', this.output];
     // commands = [...commands, '--output', './dist/'];
 
@@ -94,5 +122,9 @@ export class SassDeployer {
     }
 
     return options;
+  }
+
+  get engine() {
+    return this.#engine;
   }
 }

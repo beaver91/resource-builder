@@ -5,16 +5,23 @@ import md5 from 'md5';
 import { fileURLToPath } from 'url';
 import consoleTable from 'console-table-printer';
 import colors from 'colors';
-import { SassDeployer } from './SassDeployer.js';
+import { SassDeployer, NESTED, COMPRESSED } from './SassDeployer.js';
 import { spawn } from 'child_process';
+import { chcp, verbose, spawnIO } from './intercept.js';
 
 export class ResourceBuilder {
   #deployers;
+  #filepath;
   resources;
 
   constructor(filepath) {
     this.#deployers = {};
-    this.resources = JSON.parse(fs.readFileSync(filepath));
+    this.#filepath = filepath;
+    this.resources = JSON.parse(fs.readFileSync(this.#filepath));
+  }
+
+  stats() {
+
   }
 
   /**
@@ -151,29 +158,31 @@ export class ResourceBuilder {
     for (let idx in this.#deployers) {
       let deployer = this.#deployers[idx];
 
+      deployer.setOutputStyle(NESTED);
       deployer.enableSourceMap();
-      let commands = deployer.buildCommand();
+      deployer.enableSourceComments();
 
-      console.log(`${colors.yellow('$')} ${colors.brightBlue(commands.join(' '))}`);
+      let commands = deployer.command('watch');
+      verbose(commands);
 
-      // https://stackoverflow.com/questions/46603489/how-to-force-utf-8-in-node-js-with-exec-process
-      let child = spawn(`@chcp 65001 >nul & ${commands[0]}`, commands.slice(1), { shell: true });
-
-      child.stdout.on('data', (data) => {
-        console.log(`stdout: ${data.toString()}`);
-      });
-      
-      child.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`);
-      });
-      
-      child.on('close', (code) => {
-        console.log(`child process exited with code ${code}`);
-      });
+      let child = spawn(chcp(commands[0]), commands.slice(1), { shell: true });
+      spawnIO(child, deployer.engine);
     }
   }
 
   build() {
+    for (let idx in this.#deployers) {
+      let deployer = this.#deployers[idx];
 
+      deployer.setOutputStyle(COMPRESSED);
+      deployer.disableSourceMap();
+      deployer.disableSourceComments();
+
+      let commands = deployer.command('build');
+      verbose(commands);
+
+      let child = spawn(chcp(commands[0]), commands.slice(1), { shell: true });
+      spawnIO(child, deployer.engine);
+    }
   }
 }

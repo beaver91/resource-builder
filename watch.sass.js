@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import { ResourceBuilder } from './src/ResourceBuilder.js';
+import { verbose, NL } from './src/intercept.js';
 
 let builder = new ResourceBuilder('./resources.json');
 
@@ -20,11 +21,14 @@ if (builder.isValid()) {
   ]).then(function (input) {
     builder.setSites(input.sites);
     builder.monit();
+    verbose(NL);
 
     if (input.build == 'watch') {
       builder.watch();
     } else {
-      // TODO 
+      builder.build();
     }
+
+    verbose(NL);
   });
 }

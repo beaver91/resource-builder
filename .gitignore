@@ -108,3 +108,6 @@ composer.phar
 /vendor/*
 test/jay/inventeam/index.php
 desktop.ini
+
+# Resource Builder
+/.inven/*.inven

@@ -90,18 +90,21 @@ export class SassDeployer {
     let commands = ['node-sass', ...this._options()];
     let opt1 = (type == 'watch') ? '--watch' : null;
     let inputs = this.files;
+    let output = this.output;
 
     // build 모드일 경우 1개의 파일로 내용 통합
     if (type == 'build') {
-      inputs = `./.inven/${md5(this.output)}.inven`;
+      let filename = output.split(/[\/\\]+/).splice(-1)[0];
+      inputs = `./.inven/${md5(output)}/${filename}`;
 
+      // 임시파일 생성
       cat(this.files, inputs);
+
       inputs = [inputs];
     }
 
     commands = [...commands, opt1, ...inputs].filter(r => r != null);
-    commands = [...commands, '--output', this.output];
-    // commands = [...commands, '--output', './dist/'];
+    commands = [...commands, '--output', output];
 
     return commands;
   }

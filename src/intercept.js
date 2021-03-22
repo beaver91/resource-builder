@@ -81,10 +81,18 @@ export function now() {
  * @param {string} output 
  */
 export function cat(files, output) {
+  let splitted = output.split(/[\/\\]+/);
+  let dirPath = splitted.splice(0, splitted.length - 1);
+
+  fs.mkdirSync(dirPath.join('/'), { recursive: true });
   fs.closeSync(fs.openSync(output, 'w'));
 
   for (let file of files) {
     let data = fs.readFileSync(file, 'utf8');
     fs.appendFileSync(output, data);
   }
+}
+
+export function packageInfo() {
+  return JSON.parse(fs.readFileSync('./package.json', 'utf8'));
 }

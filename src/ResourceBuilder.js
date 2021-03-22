@@ -7,7 +7,7 @@ import consoleTable from 'console-table-printer';
 import colors from 'colors';
 import { SassDeployer, NESTED, COMPRESSED } from './SassDeployer.js';
 import { spawn } from 'child_process';
-import { chcp, verbose, spawnIO } from './intercept.js';
+import { chcp, verbose, spawnIO, packageInfo, NL } from './intercept.js';
 
 export class ResourceBuilder {
   #deployers;
@@ -21,7 +21,17 @@ export class ResourceBuilder {
   }
 
   stats() {
+    const { printTable } = consoleTable;
+    const pkgInfo = packageInfo();
+    let table = [];
 
+    verbose(NL);
+    table.push({ "MetaTag": colors.yellow("App"), "MetaData": `${pkgInfo.name} (${colors.green(pkgInfo.version)})` });
+    table.push({ "MetaTag": colors.yellow("Description"), "MetaData": pkgInfo.description });
+    table.push({ "MetaTag": colors.yellow("Resource"), "MetaData": this.#filepath });
+    table.push({ "MetaTag": colors.yellow("Repository"), "MetaData": colors.brightBlue.underline(pkgInfo.homepage) });
+
+    printTable(table);
   }
 
   /**

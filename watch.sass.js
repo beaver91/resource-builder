@@ -3,6 +3,7 @@ import { ResourceBuilder } from './src/ResourceBuilder.js';
 import { verbose, NL } from './src/intercept.js';
 
 let builder = new ResourceBuilder('./resources.json');
+builder.stats();
 
 if (builder.isValid()) {
   inquirer.prompt([

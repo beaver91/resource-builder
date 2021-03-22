@@ -6,9 +6,8 @@
 
 ## 사용 방법
 
-### 기본 전역 모듈 설치
-
 - `$ npm install -g node-sass`
+- `$ cd ./.resources/ && npm install`
 
 ### 기본 지원 명령어
 

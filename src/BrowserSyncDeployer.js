@@ -26,7 +26,6 @@ export class BrowserSyncDeployer {
   }
 
   start() {
-    console.log(this.#options);
     browserSync.init(this.#options);
   }
 }

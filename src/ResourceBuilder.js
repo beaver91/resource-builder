@@ -9,6 +9,9 @@ import { SassDeployer, NESTED, COMPRESSED } from './SassDeployer.js';
 import { spawn } from 'child_process';
 import { chcp, verbose, spawnIO, packageInfo, NL } from './intercept.js';
 
+export const PREFIX_STYLE = '~!style';
+export const PREFIX_JS = '~!js';
+
 export class ResourceBuilder {
   #deployers;
   #filepath;
@@ -111,20 +114,20 @@ export class ResourceBuilder {
 
     let resolve = [ROOT_PATH];
     
-    // `~` 특수 처리문자로 인벤 사이트 구조의 일반적인 파일 구성을 따른다.
-    if (outdir.startsWith('~')) {
+    // `~!` 특수 처리문자로 인벤 사이트 구조의 일반적인 파일 구성을 따른다.
+    if (outdir.startsWith(PREFIX_STYLE)) {
       resolve = [...resolve, site];
 
-      switch (this.filetype(outdir)) {
-        case 'css':
+      switch (this._prefix(outdir)) {
+        case PREFIX_STYLE:
           resolve = [...resolve, 'lib', 'style'];
+          resolve = [...resolve, ...fnResolveAddPath(outdir.substr(PREFIX_STYLE.length))];
         break;
-        case 'js':
+        case PREFIX_JS:
           resolve = [...resolve, 'lib', 'js'];
+          resolve = [...resolve, ...fnResolveAddPath(outdir.substr(PREFIX_JS.length))];
         default:
       }
-
-      resolve = [...resolve, ...fnResolveAddPath(outdir.substr(1))];
     } else {
       // TODO 커스텀 Path에 파일을 직접 지정할 수 있도록 기능 구현
     }
@@ -132,9 +135,23 @@ export class ResourceBuilder {
     return path.normalize(resolve.join(os.platform() == 'win32' ? '\\' : '/'));
   }
 
-  filetype(outdir) {
-    let splitted = outdir.split('.');
-    return splitted[splitted.length - 1].toLowerCase();
+  _prefix(outdir) {
+    return outdir.split('/')[0];
+  }
+
+  /**
+   * @return {Array}
+   */
+  getOutputDirs() {
+    let dirs = [];
+
+    for (let id in this.#deployers) {
+      let watcher = this.#deployers[id];
+
+      dirs.push(watcher.output);
+    }
+
+    return dirs;
   }
 
   monit() {

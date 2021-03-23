@@ -1,8 +1,10 @@
 import inquirer from 'inquirer';
 import { ResourceBuilder } from './src/ResourceBuilder.js';
+import { BrowserSyncDeployer } from './src/BrowserSyncDeployer.js';
 import { verbose, NL } from './src/intercept.js';
 
-let builder = new ResourceBuilder('./resources.json');
+const builder = new ResourceBuilder('./resources.json');
+const browserSync = new BrowserSyncDeployer();
 builder.stats();
 
 if (builder.isValid()) {
@@ -25,6 +27,9 @@ if (builder.isValid()) {
     verbose(NL);
 
     if (input.build == 'watch') {
+      browserSync.watchDirs(builder.getOutputDirs());
+      browserSync.start();
+      
       builder.watch();
     } else {
       builder.build();

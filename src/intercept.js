@@ -1,6 +1,6 @@
-import fs from 'fs';
-import os from 'os';
-import colors from 'colors';
+import fs from 'fs'
+import os from 'os'
+import colors from 'colors'
 
 /**
  * @link https://stackoverflow.com/questions/46603489/how-to-force-utf-8-in-node-js-with-exec-process
@@ -8,46 +8,49 @@ import colors from 'colors';
  */
 export function chcp(command) {
   if (os.platform() === 'win32') {
-    return `@chcp 65001 >nul & ${command}`;
+    return `@chcp 65001 >nul & ${command}`
   }
 
-  return command;
+  return command
 }
 
-export const NL = '\r\n';
+export const NL = '\r\n'
 
 /**
  * @param {Array|String} lines 
  */
 export function verbose(lines) {
   if (lines == NL) {
-    process.stdout.write(NL);
-    return;
+    process.stdout.write(NL)
+    return
   }
 
-  let logs = deepCopy(lines);
-
-  if (logs instanceof String) {
-    logs = logs.split(' ');
+  if (lines instanceof String) {
+    lines = [lines]
   }
 
-  logs[0] = colors.yellow(logs[0]);
+  let logs = deepCopy(lines)
+  logs[0] = colors.yellow(logs[0])
 
   logs = logs.map(r => {
     if (/(?:--[\d\w\-]+)/i.test(r)) {
-      return colors.grey(r);
+      return colors.grey(r)
     } else if (r == 'true' || r == 'false') {
-      return colors.green(r);
+      return colors.green(r)
     }
 
-    return r;
-  });
+    return r
+  })
 
-  console.log('✔ ' + logs.join(' '));
+  console.log('✔ ' + logs.join(' '))
 }
 
 export function deepCopy(obj) {
-  return JSON.parse(JSON.stringify(obj));
+  if (obj instanceof Array || obj instanceof Object) {
+    return JSON.parse(JSON.stringify(obj))
+  }
+
+  return obj
 }
 
 /**
@@ -56,24 +59,24 @@ export function deepCopy(obj) {
  */
 export function spawnIO(buffer, prefix = '') {
   buffer.stdout.on('data', (data) => {
-    process.stdout.write(`${colors.yellow(prefix)} [${colors.green(now())}] ${CRLF(data.toString())}`);
-  });
+    process.stdout.write(`${colors.yellow(prefix)} [${colors.green(now())}] ${CRLF(data.toString())}`)
+  })
   
   buffer.stderr.on('data', (data) => {
-    process.stderr.write(`${colors.yellow(prefix)} ${CRLF(data.toString())}`);
-  });
+    process.stderr.write(`${colors.yellow(prefix)} ${CRLF(data.toString())}`)
+  })
   
   buffer.on('close', (code) => {
-    console.log(`${colors.yellow(prefix)} child process exited with code ${code}`);
-  });
+    console.log(`${colors.yellow(prefix)} child process exited with code ${code}`)
+  })
 }
 
 export function CRLF(data) {
-  return data.replace(/[\r\n]+/g, '\n');
+  return data.replace(/[\r\n]+/g, '\n')
 }
 
 export function now() {
-  return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
+  return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
 }
 
 /**
@@ -81,18 +84,18 @@ export function now() {
  * @param {string} output 
  */
 export function cat(files, output) {
-  let splitted = output.split(/[\/\\]+/);
-  let dirPath = splitted.splice(0, splitted.length - 1);
+  let splitted = output.split(/[\/\\]+/)
+  let dirPath = splitted.splice(0, splitted.length - 1)
 
-  fs.mkdirSync(dirPath.join('/'), { recursive: true });
-  fs.closeSync(fs.openSync(output, 'w'));
+  fs.mkdirSync(dirPath.join('/'), { recursive: true })
+  fs.closeSync(fs.openSync(output, 'w'))
 
   for (let file of files) {
-    let data = fs.readFileSync(file, 'utf8');
-    fs.appendFileSync(output, data);
+    let data = fs.readFileSync(file, 'utf8')
+    fs.appendFileSync(output, data)
   }
 }
 
 export function packageInfo() {
-  return JSON.parse(fs.readFileSync('./package.json', 'utf8'));
+  return JSON.parse(fs.readFileSync('./package.json', 'utf8'))
 }

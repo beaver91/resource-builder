@@ -1,23 +1,35 @@
 {
   "common": {
-    "~!style": [
-      "./resources/sass/test.scss",
-      "./resources/sass/test2.scss"
-    ]
+    "~!style": []
   },
   "lol": {
-    "~!style": [
-      "./resources/sass/test.scss",
-      "./resources/sass/test2.scss"
-    ],
-    "~!style": [
-      "./resources/sass/test.scss",
-      "./resources/sass/test2.scss"
-    ]
+    "~!style": []
   },
   "maple": {
-    "~!style/dist/": [
-      "./resources/sass/test.scss"
-    ]
+    "~!style/": []
+  },
+  "test": {
+    "~!style/": []
+  },
+  "sosiper": {
+    "~!style/": []
+  },
+  "maple2": {
+    "~!style/": []
+  },
+  "lineage": {
+    "~!style/": []
+  },
+  "staff": {
+    "~!style/": []
+  },
+  "tera": {
+    "~!style/": []
+  },
+  "vainglory": {
+    "~!style/": []
+  },
+  "valorant": {
+    "~!style/": []
   }
 }

@@ -90,7 +90,7 @@ export class ResourceBuilder {
         let uid = md5(output);
         let files = resources[outdir];
 
-        this.#deployers[uid] = new SassDeployer(uid, output, files);
+        this.#deployers[uid] = new SassDeployer(site, output, files);
       }
     }
   }

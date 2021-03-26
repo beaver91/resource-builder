@@ -76,7 +76,8 @@ export function CRLF(data) {
 }
 
 export function now() {
-  return new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '')
+  const now = new Date()
+  return `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`
 }
 
 /**

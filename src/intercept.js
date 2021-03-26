@@ -42,7 +42,7 @@ export function verbose(lines) {
     return r
   })
 
-  console.log('✔ ' + logs.join(' '))
+  console.log(`✔ [${colors.green(now())}] ` + logs.join(' '))
 }
 
 export function deepCopy(obj) {
@@ -59,7 +59,7 @@ export function deepCopy(obj) {
  */
 export function spawnIO(buffer, prefix = '') {
   buffer.stdout.on('data', (data) => {
-    process.stdout.write(`${colors.yellow(prefix)} [${colors.green(now())}] ${CRLF(data.toString())}`)
+    process.stdout.write(`${colors.yellow(prefix)} ${CRLF(data.toString())}`)
   })
   
   buffer.stderr.on('data', (data) => {
@@ -93,6 +93,16 @@ export function cat(files, output) {
   for (let file of files) {
     let data = fs.readFileSync(file, 'utf8')
     fs.appendFileSync(output, data)
+  }
+}
+
+export function remove(file) {
+  if (fs.existsSync(file)) {
+    try {
+      fs.unlinkSync(file)
+    } catch (e) {
+      console.error(e)
+    }
   }
 }
 

@@ -1,7 +1,5 @@
-import dotenv from 'dotenv'
+import 'dotenv/config.js'
 import { DirectoryWatcher } from './src/DirectoryWatcher.js'
-
-dotenv.config()
 
 const watcher = new DirectoryWatcher(process.env.WEB_DIR)
 watcher.stats()

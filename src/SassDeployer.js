@@ -81,8 +81,8 @@ export class SassDeployer {
    * @return {Array}
    */
   _nodeSass(type) {
-    // let commands = ['./node_modules/node-sass/bin/node-sass']
-    let commands = ['node-sass', ...this._options()]
+    let commands = ['node ./node_modules/node-sass/bin/node-sass', ...this._options()]
+    // let commands = ['node-sass', ...this._options()]
     let opt1 = (type == 'watch') ? '--watch' : null
     let inputs = this.files
     let output = this.output

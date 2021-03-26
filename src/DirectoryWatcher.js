@@ -1,9 +1,10 @@
 import fs from 'fs'
+import path from 'path'
 import watch from 'node-watch'
 import { spawn } from 'child_process'
 import consoleTable from 'console-table-printer'
 import { SassDeployer, COMPRESSED } from './SassDeployer.js'
-import { chcp, verbose, spawnIO, packageInfo, NL } from './intercept.js'
+import { chcp, verbose, spawnIO, packageInfo, NL, remove } from './intercept.js'
 import colors from 'colors'
 
 export const OUTPUT_DIR = 'lib/style/dist'
@@ -57,35 +58,47 @@ export class DirectoryWatcher {
    */
   _fileHook(method, filepath) {
     filepath = DirectoryWatcher.pathNormalize(filepath)
+
     const site = DirectoryWatcher.extractSiteName(filepath)
     const { filename, ext } = DirectoryWatcher.filetype(filepath)
+    const outdir = `${process.env.WEB_DIR}${site}/${OUTPUT_DIR}`
 
-    if (method == 'update') {
-      switch (ext) {
-        case 'scss':
-        case 'sass':
+    switch (ext) {
+      case 'scss':
+      case 'sass':
+        if (method == 'update') {
           if (!filename.startsWith('_')) {
-            const outdir = `${process.env.WEB_DIR}${site}/${OUTPUT_DIR}`
-            const deployer = new SassDeployer(outdir, [filepath])
-  
-            deployer.enableSourceMap()
-            deployer.disableSourceComments()
-            deployer.setOutputStyle(COMPRESSED)
-  
-            const commands = deployer.buildCommand('build')
-            verbose(NL)
-            verbose(commands)
-  
-            const childProcess = spawn(chcp(commands[0]), commands.slice(1), { shell: true })
-            spawnIO(childProcess, deployer.engine)
+            DirectoryWatcher.compileSCSS(outdir, filepath)
           }
-        break
-        default:
-      }
+        } else if (method == 'remove') {
+          const remove1 = `${outdir}/${filename}.css`
+          const remove2 = remove1 + '.map'
+
+          verbose(NL)
+          verbose(['remove', remove1])
+          verbose(['remove', remove2])
+
+          remove(remove1)
+          remove(remove2)
+        }
+      break
+      default:
     }
-    else if (method == 'remove') {
-      // TODO remove file
-    }
+  }
+
+  static compileSCSS(outdir, filepath) {
+    const deployer = new SassDeployer(outdir, [filepath])
+  
+    deployer.enableSourceMap()
+    deployer.disableSourceComments()
+    deployer.setOutputStyle(COMPRESSED)
+
+    const commands = deployer.buildCommand('build')
+    verbose(NL)
+    verbose(commands)
+
+    const childProcess = spawn(chcp(commands[0]), commands.slice(1), { cwd: path.resolve(), shell: true })
+    spawnIO(childProcess, deployer.engine)
   }
 
   static extractSiteName(path) {

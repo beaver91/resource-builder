@@ -1,4 +1,5 @@
 import fs from 'fs'
+import path from 'path'
 import watch from 'node-watch'
 import { spawn } from 'child_process'
 import consoleTable from 'console-table-printer'
@@ -96,7 +97,7 @@ export class DirectoryWatcher {
     verbose(NL)
     verbose(commands)
 
-    const childProcess = spawn(chcp(commands[0]), commands.slice(1), { shell: true })
+    const childProcess = spawn(chcp(commands[0]), commands.slice(1), { cwd: path.resolve(), shell: true })
     spawnIO(childProcess, deployer.engine)
   }
 

@@ -112,10 +112,15 @@ export class DirectoryWatcher {
   static filetype(path) {
     let splitted = path.split('/').splice(-1)[0]
     let fileInfo = splitted.split('.')
+    let filename = []
+
+    for (let i = 0; i < fileInfo.length - 1; i++) {
+      filename.push(fileInfo[i])
+    }
 
     return {
-      "filename": fileInfo[0],
-      "ext": String(fileInfo[1]).toLowerCase().trim()
+      "filename": filename.join('.'),
+      "ext": String(fileInfo.splice(-1)[0]).toLowerCase().trim()
     }
   }
 

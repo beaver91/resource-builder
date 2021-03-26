@@ -1,4 +1,4 @@
-![image](https://git.inven.co.kr/INVEN/resource-builder/wikis/uploads/8e27ac1bc00485e6c0ec67171302bc04/image.png)
+![image](https://git.inven.co.kr/INVEN/resource-builder/wikis/uploads/5d7ac4777cb5d77028a0cf5cbc91bc82/image.png)
 
 # Resource Builder 👁‍🗨
 

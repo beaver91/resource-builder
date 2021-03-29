@@ -11,6 +11,7 @@ export const OUTPUT_DIR = 'lib/style/dist'
 
 export class DirectoryWatcher {
   dir
+  static stopWatch = false
 
   constructor(dir) {
     this.dir = dir
@@ -51,12 +52,25 @@ export class DirectoryWatcher {
     watch(this.dir, { recursive: true/*, filter: */ }, this._fileHook)
   }
 
+  static enableStopWatch() {
+    this.stopWatch = true
+  }
+
+  static disableStopWatch() {
+    this.stopWatch = false
+  }
+
   /**
    * 파일 변경이 감지될 시 해당 콜백 메소드로 데이터가 넘어온다.
    * @param {string} method 'update'|'remove'
    * @param {string} filepath 
    */
   _fileHook(method, filepath) {
+    if (DirectoryWatcher.stopWatch) {
+      console.log('stopped')
+      return
+    }
+
     filepath = DirectoryWatcher.pathNormalize(filepath)
 
     const site = DirectoryWatcher.extractSiteName(filepath)
@@ -93,12 +107,21 @@ export class DirectoryWatcher {
     deployer.disableSourceComments()
     deployer.setOutputStyle(COMPRESSED)
 
+    // TODO test
+    // DirectoryWatcher.enableStopWatch()
+    // deployer.resolveAbsolutePaths()
+    // DirectoryWatcher.disableStopWatch()
+
     const commands = deployer.buildCommand('build')
     verbose(NL)
     verbose(commands)
 
     const childProcess = spawn(chcp(commands[0]), commands.slice(1), { cwd: path.resolve(), shell: true })
     spawnIO(childProcess, deployer.engine)
+
+    childProcess.on('exit', function (code) {
+      console.log('hooked')
+    })
   }
 
   static extractSiteName(path) {

@@ -1,5 +1,6 @@
 import { cat } from './intercept.js'
 import md5 from 'md5'
+import fs from 'fs'
 
 export const NESTED = 'nested'
 export const EXPANDED = 'expanded'
@@ -14,6 +15,7 @@ export class SassDeployer {
   files
   #options
   #engine
+  #recoverPaths
 
   /**
    * @param {string} output 
@@ -23,6 +25,7 @@ export class SassDeployer {
     this.output = output
     this.files = files
 
+    this.#recoverPaths = {}
     this.#engine = NODE_SASS
     this.#options = {
       "--output-style": SASS_OUTPUT_STYLES[0], // default is 'nested'
@@ -60,6 +63,35 @@ export class SassDeployer {
     }
 
     this.#options['--output-style'] = type
+  }
+
+  /**
+   * @test
+   */
+  resolveAbsolutePaths() {
+    this.#recoverPaths = {}
+
+    for (let file of this.files) {
+      let text = fs.readFileSync(file).toString()
+      let matches = [...text.matchAll(/@import\s+\'(?<path>.*)\'\;/gm)]
+
+      if (matches.length > 0 && !(file in this.#recoverPaths)) {
+        this.#recoverPaths[file] = []
+      }
+
+      for (let match of matches) {
+        this.#recoverPaths[file].push({
+          "originPath": match[0],
+          "path": match.groups.path,
+        })
+
+        text = text.replace(match[0], 'test')
+      }
+
+      fs.writeFileSync(file, text)
+    }
+
+    console.log(this.#recoverPaths)
   }
 
   /**

@@ -65,9 +65,6 @@ export class SassDeployer {
     this.#options['--output-style'] = type
   }
 
-  /**
-   * @test
-   */
   resolveAbsolutePaths() {
     this.#recoverPaths = {}
 
@@ -90,8 +87,6 @@ export class SassDeployer {
 
       fs.writeFileSync(file, text)
     }
-
-    console.log(this.#recoverPaths)
   }
 
   /**

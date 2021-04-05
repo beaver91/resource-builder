@@ -1,19 +1,16 @@
 import fs from 'fs'
-import path from 'path'
 import watch from 'node-watch'
-import { spawn, execSync } from 'child_process'
+import { execSync } from 'child_process'
 import consoleTable from 'console-table-printer'
 import { SassDeployer, COMPRESSED } from './SassDeployer.js'
-import { chcp, verbose, spawnIO, packageInfo, NL, remove } from './intercept.js'
+import { verbose, packageInfo, NL, remove } from './intercept.js'
 import colors from 'colors'
 
 export const OUTPUT_DIR = 'lib/style/dist'
-const TASK_INTERVAL = 200
 
 export class DirectoryWatcher {
   dir
   #watcher
-  static lastTouchFile = ''
   static tasks = []
 
   constructor(dir) {
@@ -55,35 +52,12 @@ export class DirectoryWatcher {
     this.#watcher = watch(this.dir, { 
       recursive: true,
       filter(f, skip) {
-        if (/\/node_modules/.test(f)) return skip;
-        if (/\.git/.test(f)) return skip;
+        if (/\/node_modules/.test(f)) return skip
+        if (/\.git/.test(f)) return skip
+        if (/\.resources/.test(f)) return skip
         return true
       }
-    }, this._pushTask)
-
-    // exec
-    setInterval(async () => {
-      if (DirectoryWatcher.tasks.length) {
-        const task = DirectoryWatcher.tasks.shift()
-
-        try {
-          await this._executeTask(task.method, task.filepath)
-        } catch (e) {
-          console.error(e)
-        }
-      }
-    }, TASK_INTERVAL)
-  }
-
-  _pushTask(method, filepath) {
-    if (DirectoryWatcher.lastTouchFile != filepath) {
-      DirectoryWatcher.tasks.push({
-        "method": method,
-        "filepath": filepath,
-      })
-    } else {
-      DirectoryWatcher.lastTouchFile = ''
-    }
+    }, this._executeTask)
   }
 
   /**
@@ -92,38 +66,33 @@ export class DirectoryWatcher {
    * @param {string} filepath 
    */
   _executeTask(method, filepath) {
-    return new Promise((resolve, reject) => {
-      const filepathNormalized = DirectoryWatcher.pathNormalize(filepath)
+    const filepathNormalized = DirectoryWatcher.pathNormalize(filepath)
 
-      const site = DirectoryWatcher.extractSiteName(filepathNormalized)
-      const { filename, ext } = DirectoryWatcher.filetype(filepathNormalized)
-      const outdir = `${process.env.WEB_DIR}${site}/${OUTPUT_DIR}`
-  
-      switch (ext) {
-        case 'scss':
-        case 'sass':
-          if (method == 'update') {
-            if (!filename.startsWith('_')) {
-              DirectoryWatcher.lastTouchFile = filepath
-              DirectoryWatcher.compileSCSS(outdir, filepathNormalized)
-            }
-          } else if (method == 'remove') {
-            const remove1 = `${outdir}/${filename}.css`
-            const remove2 = remove1 + '.map'
-  
-            verbose(NL)
-            verbose(['remove', remove1])
-            verbose(['remove', remove2])
-  
-            remove(remove1)
-            remove(remove2)
+    const site = DirectoryWatcher.extractSiteName(filepathNormalized)
+    const { filename, ext } = DirectoryWatcher.filetype(filepathNormalized)
+    const outdir = `${process.env.WEB_DIR}${site}/${OUTPUT_DIR}`
+
+    switch (ext) {
+      case 'scss':
+      case 'sass':
+        if (method == 'update') {
+          if (!filename.startsWith('_')) {
+            DirectoryWatcher.compileSCSS(outdir, filepathNormalized)
           }
-        break
-        default:
-      }
+        } else if (method == 'remove') {
+          const remove1 = `${outdir}/${filename}.css`
+          const remove2 = remove1 + '.map'
 
-      resolve(true)
-    })
+          verbose(NL)
+          verbose(['remove', remove1])
+          verbose(['remove', remove2])
+
+          remove(remove1)
+          remove(remove2)
+        }
+      break
+      default:
+    }
   }
 
   static async compileSCSS(outdir, filepath) {
@@ -144,7 +113,7 @@ export class DirectoryWatcher {
     // spawnIO(childProcess, deployer.engine)
 
     let output = execSync(commands.join(' '))
-    // console.log(output.toString())
+    console.log(output.toString())
   }
 
   static extractSiteName(path) {

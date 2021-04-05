@@ -9,6 +9,7 @@ export const COMPRESSED = 'compressed'
 export const SASS_OUTPUT_STYLES = [NESTED, EXPANDED, COMPACT, COMPRESSED]
 export const NODE_SASS = 'node-sass'
 export const DEFAULT_ENGINE = NODE_SASS
+export const ABSOLUTE_MASK = '~'
 
 export class SassDeployer {
   output
@@ -68,7 +69,8 @@ export class SassDeployer {
   resolveAbsolutePaths() {
     this.#recoverPaths = {}
 
-    for (let file of this.files) {
+    for (let i = 0; i < this.files.length; i++) {
+      let file = this.files[i]
       let text = fs.readFileSync(file).toString()
       let matches = [...text.matchAll(/@import\s+\'(?<path>.*)\'\;/gm)]
 
@@ -82,10 +84,31 @@ export class SassDeployer {
           "path": match.groups.path,
         })
 
-        text = text.replace(match[0], 'test')
+        if (match.groups.path.startsWith(ABSOLUTE_MASK)) {
+          let resolvedPath = match.groups.path.replace(
+            new RegExp(`^${ABSOLUTE_MASK}\/?`, 'i'), 
+            `${process.env.WEB_DIR}`,
+          )
+
+          text = text.replace(
+            match[0], 
+            `@import '${resolvedPath}';`,
+          )
+        }
       }
 
-      fs.writeFileSync(file, text)
+      let passivePath = `./.passive/${md5(file)}/`
+      let passiveFilename = `${file.split('/').slice(-1)[0]}`
+      let passiveFile = passivePath + passiveFilename
+
+      if (!fs.existsSync(passivePath)) {
+        fs.mkdirSync(passivePath, { recursive: true })
+      }
+
+      fs.writeFileSync(passiveFile, text)
+
+      // **실제 파일 경로가 아닌 passive 파일로 변경**
+      this.files[i] = passiveFile
     }
   }
 

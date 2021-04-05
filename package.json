@@ -1,6 +1,6 @@
 {
   "name": "inven-resources",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "인벤 KR 사이트에 SCSS를 적용시키기 위한 베이스 도구",
   "main": "index.js",
   "scripts": {

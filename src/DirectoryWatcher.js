@@ -134,7 +134,7 @@ export class DirectoryWatcher {
     deployer.setOutputStyle(COMPRESSED)
 
     // TODO test
-    deployer.resolveAbsolutePaths()
+    // deployer.resolveAbsolutePaths()
 
     const commands = deployer.buildCommand('build')
     verbose(NL)

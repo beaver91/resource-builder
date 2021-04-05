@@ -52,8 +52,9 @@ export class DirectoryWatcher {
     this.#watcher = watch(this.dir, { 
       recursive: true,
       filter(f, skip) {
-        if (/\/node_modules/.test(f)) return skip;
-        if (/\.git/.test(f)) return skip;
+        if (/\/node_modules/.test(f)) return skip
+        if (/\.git/.test(f)) return skip
+        if (/\.resources/.test(f)) return skip
         return true
       }
     }, this._executeTask)
@@ -102,7 +103,7 @@ export class DirectoryWatcher {
     deployer.setOutputStyle(COMPRESSED)
 
     // TODO test
-    // deployer.resolveAbsolutePaths()
+    deployer.resolveAbsolutePaths()
 
     const commands = deployer.buildCommand('build')
     verbose(NL)
@@ -112,7 +113,7 @@ export class DirectoryWatcher {
     // spawnIO(childProcess, deployer.engine)
 
     let output = execSync(commands.join(' '))
-    // console.log(output.toString())
+    console.log(output.toString())
   }
 
   static extractSiteName(path) {

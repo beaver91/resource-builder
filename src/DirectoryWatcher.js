@@ -1,16 +1,20 @@
 import fs from 'fs'
 import path from 'path'
 import watch from 'node-watch'
-import { spawn } from 'child_process'
+import { spawn, execSync } from 'child_process'
 import consoleTable from 'console-table-printer'
 import { SassDeployer, COMPRESSED } from './SassDeployer.js'
 import { chcp, verbose, spawnIO, packageInfo, NL, remove } from './intercept.js'
 import colors from 'colors'
 
 export const OUTPUT_DIR = 'lib/style/dist'
+const TASK_INTERVAL = 200
 
 export class DirectoryWatcher {
   dir
+  #watcher
+  static lastTouchFile = ''
+  static tasks = []
 
   constructor(dir) {
     this.dir = dir
@@ -48,7 +52,38 @@ export class DirectoryWatcher {
    * @return void
    */
   start() {
-    watch(this.dir, { recursive: true/*, filter: */ }, this._fileHook)
+    this.#watcher = watch(this.dir, { 
+      recursive: true,
+      filter(f, skip) {
+        if (/\/node_modules/.test(f)) return skip;
+        if (/\.git/.test(f)) return skip;
+        return true
+      }
+    }, this._pushTask)
+
+    // exec
+    setInterval(async () => {
+      if (DirectoryWatcher.tasks.length) {
+        const task = DirectoryWatcher.tasks.shift()
+
+        try {
+          await this._executeTask(task.method, task.filepath)
+        } catch (e) {
+          console.error(e)
+        }
+      }
+    }, TASK_INTERVAL)
+  }
+
+  _pushTask(method, filepath) {
+    if (DirectoryWatcher.lastTouchFile != filepath) {
+      DirectoryWatcher.tasks.push({
+        "method": method,
+        "filepath": filepath,
+      })
+    } else {
+      DirectoryWatcher.lastTouchFile = ''
+    }
   }
 
   /**
@@ -56,49 +91,60 @@ export class DirectoryWatcher {
    * @param {string} method 'update'|'remove'
    * @param {string} filepath 
    */
-  _fileHook(method, filepath) {
-    filepath = DirectoryWatcher.pathNormalize(filepath)
+  _executeTask(method, filepath) {
+    return new Promise((resolve, reject) => {
+      const filepathNormalized = DirectoryWatcher.pathNormalize(filepath)
 
-    const site = DirectoryWatcher.extractSiteName(filepath)
-    const { filename, ext } = DirectoryWatcher.filetype(filepath)
-    const outdir = `${process.env.WEB_DIR}${site}/${OUTPUT_DIR}`
-
-    switch (ext) {
-      case 'scss':
-      case 'sass':
-        if (method == 'update') {
-          if (!filename.startsWith('_')) {
-            DirectoryWatcher.compileSCSS(outdir, filepath)
+      const site = DirectoryWatcher.extractSiteName(filepathNormalized)
+      const { filename, ext } = DirectoryWatcher.filetype(filepathNormalized)
+      const outdir = `${process.env.WEB_DIR}${site}/${OUTPUT_DIR}`
+  
+      switch (ext) {
+        case 'scss':
+        case 'sass':
+          if (method == 'update') {
+            if (!filename.startsWith('_')) {
+              DirectoryWatcher.lastTouchFile = filepath
+              DirectoryWatcher.compileSCSS(outdir, filepathNormalized)
+            }
+          } else if (method == 'remove') {
+            const remove1 = `${outdir}/${filename}.css`
+            const remove2 = remove1 + '.map'
+  
+            verbose(NL)
+            verbose(['remove', remove1])
+            verbose(['remove', remove2])
+  
+            remove(remove1)
+            remove(remove2)
           }
-        } else if (method == 'remove') {
-          const remove1 = `${outdir}/${filename}.css`
-          const remove2 = remove1 + '.map'
+        break
+        default:
+      }
 
-          verbose(NL)
-          verbose(['remove', remove1])
-          verbose(['remove', remove2])
-
-          remove(remove1)
-          remove(remove2)
-        }
-      break
-      default:
-    }
+      resolve(true)
+    })
   }
 
-  static compileSCSS(outdir, filepath) {
+  static async compileSCSS(outdir, filepath) {
     const deployer = new SassDeployer(outdir, [filepath])
   
     deployer.enableSourceMap()
     deployer.disableSourceComments()
     deployer.setOutputStyle(COMPRESSED)
 
+    // TODO test
+    deployer.resolveAbsolutePaths()
+
     const commands = deployer.buildCommand('build')
     verbose(NL)
     verbose(commands)
 
-    const childProcess = spawn(chcp(commands[0]), commands.slice(1), { cwd: path.resolve(), shell: true })
-    spawnIO(childProcess, deployer.engine)
+    // const childProcess = spawn(chcp(commands[0]), commands.slice(1), { cwd: path.resolve(), shell: true })
+    // spawnIO(childProcess, deployer.engine)
+
+    let output = execSync(commands.join(' '))
+    // console.log(output.toString())
   }
 
   static extractSiteName(path) {

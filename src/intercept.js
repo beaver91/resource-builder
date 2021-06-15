@@ -4,7 +4,7 @@ import colors from 'colors'
 
 /**
  * @link https://stackoverflow.com/questions/46603489/how-to-force-utf-8-in-node-js-with-exec-process
- * @param {string} command 
+ * @param {string} command
  */
 export function chcp(command) {
   if (os.platform() === 'win32') {
@@ -17,7 +17,7 @@ export function chcp(command) {
 export const NL = '\r\n'
 
 /**
- * @param {Array|String} lines 
+ * @param {Array|String} lines
  */
 export function verbose(lines) {
   if (lines == NL) {
@@ -25,7 +25,7 @@ export function verbose(lines) {
     return
   }
 
-  if (lines instanceof String) {
+  if (typeof lines == 'string') {
     lines = [lines]
   }
 
@@ -54,18 +54,18 @@ export function deepCopy(obj) {
 }
 
 /**
- * @param {object} buffer 
+ * @param {object} buffer
  * @param {string} prefix
  */
 export function spawnIO(buffer, prefix = '') {
   buffer.stdout.on('data', (data) => {
     process.stdout.write(`${colors.yellow(prefix)} ${CRLF(data.toString())}`)
   })
-  
+
   buffer.stderr.on('data', (data) => {
     process.stderr.write(`${colors.yellow(prefix)} ${CRLF(data.toString())}`)
   })
-  
+
   buffer.on('close', (code) => {
     console.log(`${colors.yellow(prefix)} child process exited with code ${code}`)
   })
@@ -81,8 +81,8 @@ export function now() {
 }
 
 /**
- * @param {Array} files 
- * @param {string} output 
+ * @param {Array} files
+ * @param {string} output
  */
 export function cat(files, output) {
   let splitted = output.split(/[\/\\]+/)

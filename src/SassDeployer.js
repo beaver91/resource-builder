@@ -1,6 +1,8 @@
 import { cat } from './intercept.js'
 import md5 from 'md5'
 import fs from 'fs'
+import nodePath from 'path'
+import sass from 'sass'
 
 export const NESTED = 'nested'
 export const EXPANDED = 'expanded'
@@ -8,6 +10,7 @@ export const COMPACT = 'compact'
 export const COMPRESSED = 'compressed'
 export const SASS_OUTPUT_STYLES = [NESTED, EXPANDED, COMPACT, COMPRESSED]
 export const NODE_SASS = 'node-sass'
+export const DART_SASS = 'dart-sass'
 export const DEFAULT_ENGINE = NODE_SASS
 export const ABSOLUTE_MASK = '~'
 
@@ -17,10 +20,10 @@ export class SassDeployer {
   #options
   #engine
   #recoverPaths
-
+  #importer
   /**
-   * @param {string} output 
-   * @param {array} files 
+   * @param {string} output
+   * @param {array} files
    */
   constructor(output, files) {
     this.output = output
@@ -32,6 +35,7 @@ export class SassDeployer {
       "--output-style": SASS_OUTPUT_STYLES[0], // default is 'nested'
       // "--indent-type": 'space',
     }
+    this.#importer = function() {};
   }
 
   enableSourceMap() {
@@ -54,6 +58,14 @@ export class SassDeployer {
     if ('--source-comments' in this.#options) {
       delete this.#options['--source-comments']
     }
+  }
+
+  useJsMode() {
+    this.#engine = DART_SASS;
+  }
+
+  setImporter(fn) {
+    this.#importer = fn;
   }
 
   setOutputStyle(type) {
@@ -86,12 +98,12 @@ export class SassDeployer {
 
         if (match.groups.path.startsWith(ABSOLUTE_MASK)) {
           let resolvedPath = match.groups.path.replace(
-            new RegExp(`^${ABSOLUTE_MASK}\/?`, 'i'), 
+            new RegExp(`^${ABSOLUTE_MASK}\/?`, 'i'),
             `${process.env.WEB_DIR}`,
           )
 
           text = text.replace(
-            match[0], 
+            match[0],
             `@import '${resolvedPath}';`,
           )
         }
@@ -118,6 +130,8 @@ export class SassDeployer {
    */
   buildCommand(type) {
     switch (this.#engine) {
+      case DART_SASS:
+        return this._dartSass();
       case NODE_SASS:
         return this._nodeSass(type)
       default:
@@ -127,7 +141,7 @@ export class SassDeployer {
 
   /**
    * @examples `node-sass --watch .\resources\sass\test.scss .\resources\sass\test2.scss --output .\dist\`
-   * @param {string} type 
+   * @param {string} type
    * @return {Array}
    */
   _nodeSass(type) {
@@ -141,6 +155,31 @@ export class SassDeployer {
     commands = [...commands, '--output', output]
 
     return commands
+  }
+
+  _dartSass() {
+    let r = [];
+    for (const file of this.files) {
+      const filename = file.match(/\/([^/]+)\.scss$/)[1];
+      const cssPath = `${this.output.replace(/..\/[^/]+/, file.match(/..\/[^/]+/)[0])}/${filename}.css`;
+      try {
+        const result = sass.renderSync({
+          file : file,
+          outputStyle : this.#options['--output-style'],
+          sourceComments : '--source-comments' in this.#options,
+          sourceMap : '--source-map' in this.#options,
+          outFile : nodePath.resolve(cssPath),
+          importer : this.#importer
+        });
+        fs.writeFileSync(cssPath, result.css);
+        result.map && fs.writeFileSync(`${cssPath}.map`, result.map);
+        r.push(`${file} -> ${cssPath}`);
+      } catch (e) {
+        fs.writeFileSync(cssPath, e.formatted);
+        r.push(`${file} 파일 컴파일 - ${e.file} 파일에 오류가 있습니다.`);
+      }
+    }
+    return r;
   }
 
   /**

@@ -101,14 +101,15 @@ export class DirectoryWatcher {
           remove(remove1)
           remove(remove2)
 
-          if (DirectoryWatcher.reversImportTree.has(filepathNormalized)) {
-            for (const path of DirectoryWatcher.reversImportTree.get(filepathNormalized)) {
-              if (DirectoryWatcher.importTree.has(path)) {
-                DirectoryWatcher.importTree.get(path).delete(filepathNormalized);
-              }
-            }
-            DirectoryWatcher.reversImportTree.delete(filepathNormalized);
-          }
+          //브랜치 변경할때 문제가 될 수 있음
+          // if (DirectoryWatcher.reversImportTree.has(filepathNormalized)) {
+          //   for (const path of DirectoryWatcher.reversImportTree.get(filepathNormalized)) {
+          //     if (DirectoryWatcher.importTree.has(path)) {
+          //       DirectoryWatcher.importTree.get(path).delete(filepathNormalized);
+          //     }
+          //   }
+          //   DirectoryWatcher.reversImportTree.delete(filepathNormalized);
+          // }
         }
       break
       default:

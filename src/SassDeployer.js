@@ -159,7 +159,7 @@ export class SassDeployer {
 
   _dartSass() {
     let r = [];
-    for (const file of this.files) {
+    for (const file of this.files.filter(f => fs.existsSync(f))) {
       const filename = file.match(/\/([^/]+)\.scss$/)[1];
       const cssPath = `${this.output.replace(/..\/[^/]+/, file.match(/..\/[^/]+/)[0])}/${filename}.css`;
       try {

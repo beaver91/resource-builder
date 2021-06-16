@@ -28,11 +28,11 @@
 온전한 사용을 위해서 아래와 같은 주의사항이 필요합니다.  
 __주의 사항 : Partial SCSS만을 Import해야 합니다. MAIN SCSS를 Import할 경우 의존성 트리를 탐색하지 않습니다.__
 
-#### 단축경로 지원
+#### 절대경로 지원
   - ~/webzine/scss  
-    ~/[사이트]/로 시작하는 경로는 ~/webzine/lib/style/로 치환합니다.
+    ~/[사이트]/로 시작하는 경로는 ../webzine/lib/style/로 치환합니다.
     /lib/style/은 고정 경로이고 하위 경로만 지정할 수 있습니다.
-    ex) ~/webzine/lib/style/common/basic과 ~/webzine/common/basic은 같습니다.
+    ex) ../../../../webzine/lib/style/common/basic과 ~/webzine/common/basic은 같습니다.
     
 #### Javascript Transpiler (업데이트 예정)
 

@@ -61,7 +61,8 @@ export class DirectoryWatcher {
         if (/\.resources/.test(f)) return skip
         if (/\.idea/.test(f)) return skip
         return true
-      }
+      },
+      delay : 500
     }, this._executeTask)
   }
 
@@ -101,15 +102,15 @@ export class DirectoryWatcher {
           remove(remove1)
           remove(remove2)
 
-          //브랜치 변경할때 문제가 될 수 있음
-          // if (DirectoryWatcher.reversImportTree.has(filepathNormalized)) {
-          //   for (const path of DirectoryWatcher.reversImportTree.get(filepathNormalized)) {
-          //     if (DirectoryWatcher.importTree.has(path)) {
-          //       DirectoryWatcher.importTree.get(path).delete(filepathNormalized);
-          //     }
-          //   }
-          //   DirectoryWatcher.reversImportTree.delete(filepathNormalized);
-          // }
+          // 브랜치 변경할때 문제가 될 수 있음
+          if (DirectoryWatcher.reversImportTree.has(filepathNormalized)) {
+            for (const path of DirectoryWatcher.reversImportTree.get(filepathNormalized)) {
+              if (DirectoryWatcher.importTree.has(path)) {
+                DirectoryWatcher.importTree.get(path).delete(filepathNormalized);
+              }
+            }
+            DirectoryWatcher.reversImportTree.delete(filepathNormalized);
+          }
         }
       break
       default:
@@ -230,7 +231,6 @@ export class DirectoryWatcher {
   }
 
   static resolveImportPath(url, prev) {
-    url = url.replace(/^~\/([^/]+)(?:\/lib\/style)?/, '../$1/lib/style');
-    return {file : url};
+    return {file : url.replace(/^~\/([^/]+)(?:\/lib\/style)?/, '../$1/lib/style')};
   }
 }

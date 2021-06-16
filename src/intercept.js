@@ -42,7 +42,7 @@ export function verbose(lines) {
     return r
   })
 
-  console.log(`✔ [${colors.green(now())}] ` + logs.join(' '))
+  console.log(`✔ [${colors.green(now())}] ` + logs.join('\n\t'))
 }
 
 export function deepCopy(obj) {

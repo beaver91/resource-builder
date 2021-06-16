@@ -158,7 +158,7 @@ export class SassDeployer {
   }
 
   _dartSass() {
-    let r = [];
+    let r = [], fail = false;
     for (const file of this.files.filter(f => fs.existsSync(f))) {
       const filename = file.match(/\/([^/]+)\.scss$/)[1];
       const cssPath = `${this.output.replace(/..\/[^/]+/, file.match(/..\/[^/]+/)[0])}/${filename}.css`;
@@ -175,10 +175,12 @@ export class SassDeployer {
         result.map && fs.writeFileSync(`${cssPath}.map`, result.map);
         r.push(`${file} -> ${cssPath}`);
       } catch (e) {
+        fail = true;
         fs.writeFileSync(cssPath, e.formatted);
-        r.push(`${file} 파일 컴파일 - ${e.file} 파일에 오류가 있습니다.`);
+        r.push(`${file} -> ${cssPath} 파일에 오류가 있습니다. 자세한 내용은 css 파일을 참조해주세요.`);
       }
     }
+    r.unshift(fail ? '컴파일 과정에서 오류가 발생했습니다.' : '모든 파일이 정상적으로 컴파일됐습니다.');
     return r;
   }
 

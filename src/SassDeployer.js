@@ -161,7 +161,7 @@ export class SassDeployer {
     let r = [], fail = false;
     for (const file of this.files.filter(f => fs.existsSync(f))) {
       const filename = file.match(/\/([^/]+)\.scss$/)[1];
-      const cssPath = `${this.output.replace(/..\/[^/]+/, file.match(/..\/[^/]+/)[0])}/${filename}.css`;
+      const cssPath = `${this.output.replace(/\.\.\/[^/]+/, file.match(/\.\.\/[^/]+/)[0])}/${filename}.css`;
       try {
         const result = sass.renderSync({
           file : file,

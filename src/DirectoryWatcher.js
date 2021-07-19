@@ -1,20 +1,19 @@
 import fs from 'fs'
 import nodePath from 'path'
-import glob from 'glob'
 import watch from 'node-watch'
 import { execSync } from 'child_process'
 import consoleTable from 'console-table-printer'
 import { SassDeployer, COMPRESSED, NODE_SASS, DART_SASS } from './SassDeployer.js'
 import { verbose, packageInfo, NL, remove } from './intercept.js'
 import colors from 'colors'
+import versioning from './Versioning.js';
+import importTree from './ImportTree.js';
 
 export const OUTPUT_DIR = 'lib/style/dist'
 
 export class DirectoryWatcher {
   dir;
   #watcher;
-  static importTree = new Map();
-  static reversImportTree = new Map();
   static tasks = [];
 
   constructor(dir) {
@@ -29,7 +28,7 @@ export class DirectoryWatcher {
     if (!fs.existsSync(this.dir)) {
       throw new ReferenceError(`${colors.red('해당 디렉토리를 찾을 수 없습니다.')} (${colors.strikethrough(this.dir)})`)
     }
-    DirectoryWatcher.scanImportTree(this.dir);
+    importTree.scan(this.dir);
     return true
   }
 
@@ -52,7 +51,7 @@ export class DirectoryWatcher {
   /**
    * @return void
    */
-  start() {
+  start(useVersioning = false) {
     this.#watcher = watch(this.dir, {
       recursive: true,
       filter(f, skip) {
@@ -64,6 +63,9 @@ export class DirectoryWatcher {
       },
       delay : 500
     }, this._executeTask)
+    if (useVersioning) {
+      versioning.scan();
+    }
   }
 
   /**
@@ -82,9 +84,9 @@ export class DirectoryWatcher {
       case 'scss':
       case 'sass':
         if (method == 'update') {
-          DirectoryWatcher.createImportTree(filepathNormalized, dir);
+          importTree.create(filepathNormalized, dir);
           if (filename.startsWith('_')) {
-            const targetFiles = DirectoryWatcher.resolveSCSS(filepathNormalized);
+            const targetFiles = importTree.resolveSCSS(filepathNormalized);
             if (targetFiles.size) {
               DirectoryWatcher.compileSCSS(outdir, Array.from(targetFiles));
             }
@@ -103,16 +105,22 @@ export class DirectoryWatcher {
           remove(remove2)
 
           // 브랜치 변경할때 문제가 될 수 있음
-          if (DirectoryWatcher.reversImportTree.has(filepathNormalized)) {
-            for (const path of DirectoryWatcher.reversImportTree.get(filepathNormalized)) {
-              if (DirectoryWatcher.importTree.has(path)) {
-                DirectoryWatcher.importTree.get(path).delete(filepathNormalized);
-              }
-            }
-            DirectoryWatcher.reversImportTree.delete(filepathNormalized);
-          }
+          importTree.delete(filepathNormalized);
         }
-      break
+      break;
+    case 'css':
+      // if (method == 'update') {
+      //   let r = execSync('git diff --name-only --diff-filter=U', {cwd : process.env.WEB_DIR});
+      //   console.log(r.toString());
+      // }
+      if (method == 'update' && versioning.compare(filepathNormalized) === false) {
+        const scssPath = importTree.getMainSCSS(process.env.WEB_DIR, site, filename);
+        if (scssPath) {
+          console.log('\n', `${colors.red(`css 파일 변경이 감지되었습니다. ${scssPath} 파일을 다시 컴파일합니다.`)}`);
+          DirectoryWatcher.compileSCSS(outdir, scssPath);
+        }
+      }
+      break;
       default:
     }
   }
@@ -121,7 +129,6 @@ export class DirectoryWatcher {
     const deployer = new SassDeployer(outdir, Array.isArray(filepath) ? filepath : [filepath]);
 
     deployer.useJsMode();
-    deployer.setImporter(DirectoryWatcher.resolveImportPath);
     deployer.enableSourceMap();
     deployer.disableSourceComments();
     deployer.setOutputStyle(COMPRESSED);
@@ -158,79 +165,5 @@ export class DirectoryWatcher {
 
   static pathNormalize(path) {
     return path.replace(/\\+/g, '/')
-  }
-
-  static normalizeImportPath(importPath) {
-    importPath = importPath.split('/');
-    let lastPart = importPath.pop();
-    if (lastPart.startsWith('_')) {
-      importPath.push(lastPart.substr(1).replace('.scss', ''));
-    } else {
-      importPath.push(lastPart);
-    }
-    return importPath.join('/');
-  }
-
-  static createImportTree(filePath, dirPath) {
-    let importPathArray = [],
-      baseFilePath = DirectoryWatcher.normalizeImportPath(nodePath.posix.resolve('../', filePath));
-    const contents = fs.readFileSync(filePath, 'utf8'),
-      matches = contents.replace(/\/\*.+?\*\//gs, '').matchAll(/(?<!\/\/\s*)@import\s*(['"])(?!\/\/)(.+)(?!.+\1)\1;/g);
-    for (const match of matches) {
-      let importPath = DirectoryWatcher.resolveImportPath(match[2], baseFilePath).file;
-      if (importPath == match[2]) {
-        importPath = nodePath.posix.resolve('../', dirPath, importPath);
-      }
-      importPath = DirectoryWatcher.normalizeImportPath(importPath);
-
-      if (!DirectoryWatcher.importTree.has(importPath)) {
-        DirectoryWatcher.importTree.set(importPath, new Set());
-      }
-
-      if (importPath != baseFilePath) {
-        DirectoryWatcher.importTree.get(importPath).add(baseFilePath);
-        importPathArray.push(importPath);
-      }
-    }
-
-    if (!DirectoryWatcher.reversImportTree.has(baseFilePath)) {
-      DirectoryWatcher.reversImportTree.set(baseFilePath, new Set());
-    }
-
-    for (const path of DirectoryWatcher.reversImportTree.get(baseFilePath)) {
-      if (!importPathArray.includes(path)) {
-        DirectoryWatcher.importTree.get(path).delete(baseFilePath);
-      }
-    }
-    DirectoryWatcher.reversImportTree.set(baseFilePath, new Set(importPathArray));
-  }
-
-  static scanImportTree(dir) {
-    const start = Date.now();
-    console.log(`${colors.cyan('import 의존성 스캔 시작')}`);
-    for (const path of glob.sync(`${dir}*/lib/style/**/*.scss`)) {
-      DirectoryWatcher.createImportTree(path, nodePath.dirname(path));
-    }
-    console.log(`${colors.cyan('import 의존성 스캔 종료')}`);
-    console.log(`${colors.yellow(Date.now() - start)}ms 소요`);
-  }
-
-  static resolveSCSS(path) {
-    let r = [];
-    path = DirectoryWatcher.normalizeImportPath(nodePath.posix.resolve('../', path));
-    if (DirectoryWatcher.importTree.has(path)) {
-      for (const file of DirectoryWatcher.importTree.get(path)) {
-        if (/\.scss$/.test(file)) {
-          r.push(file);
-        } else {
-          r = r.concat(Array.from(DirectoryWatcher.resolveSCSS(file)));
-        }
-      }
-    }
-    return new Set(r);
-  }
-
-  static resolveImportPath(url, prev) {
-    return {file : url.replace(/^~\/([^/]+)(?:\/lib\/style)?/, '../$1/lib/style')};
   }
 }

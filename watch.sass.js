@@ -6,7 +6,7 @@ watcher.stats()
 
 try {
   if (watcher.isValid()) {
-    watcher.start()
+    watcher.start(process.argv.slice(2, 3).includes('with-versioning'))
   }
 } catch (e) {
   console.error(e)

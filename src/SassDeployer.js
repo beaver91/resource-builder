@@ -3,6 +3,8 @@ import md5 from 'md5'
 import fs from 'fs'
 import nodePath from 'path'
 import sass from 'sass'
+import versioning from './Versioning.js';
+import { importer } from './ImportTree.js';
 
 export const NESTED = 'nested'
 export const EXPANDED = 'expanded'
@@ -20,7 +22,6 @@ export class SassDeployer {
   #options
   #engine
   #recoverPaths
-  #importer
   /**
    * @param {string} output
    * @param {array} files
@@ -35,7 +36,6 @@ export class SassDeployer {
       "--output-style": SASS_OUTPUT_STYLES[0], // default is 'nested'
       // "--indent-type": 'space',
     }
-    this.#importer = function() {};
   }
 
   enableSourceMap() {
@@ -62,10 +62,6 @@ export class SassDeployer {
 
   useJsMode() {
     this.#engine = DART_SASS;
-  }
-
-  setImporter(fn) {
-    this.#importer = fn;
   }
 
   setOutputStyle(type) {
@@ -169,13 +165,15 @@ export class SassDeployer {
           sourceComments : '--source-comments' in this.#options,
           sourceMap : '--source-map' in this.#options,
           outFile : nodePath.resolve(cssPath),
-          importer : this.#importer
+          importer : importer
         });
+        versioning.set(cssPath, result.css);
         fs.writeFileSync(cssPath, result.css);
         result.map && fs.writeFileSync(`${cssPath}.map`, result.map);
         r.push(`${file} -> ${cssPath}`);
       } catch (e) {
         fail = true;
+        versioning.delete(cssPath);
         fs.writeFileSync(cssPath, e.formatted);
         r.push(`${file} -> ${cssPath} 파일에 오류가 있습니다. 자세한 내용은 css 파일을 참조해주세요.`);
       }
